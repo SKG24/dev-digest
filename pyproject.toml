@@ -1,0 +1,92 @@
+# File: pyproject.toml
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dev-digest"
+version = "1.0.0"
+description = "Personalized coding digest generator for developers"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "Dev Digest Team", email = "team@devdigest.com"},
+]
+keywords = ["development", "digest", "github", "stackoverflow", "newsletter"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Topic :: Communications :: Email",
+]
+dependencies = [
+    "fastapi==0.104.1",
+    "uvicorn==0.24.0",
+    "sqlalchemy==2.0.23",
+    "python-multipart==0.0.6",
+    "jinja2==3.1.2",
+    "python-dotenv==1.0.0",
+    "requests==2.31.0",
+    "apscheduler==3.10.4",
+    "pytz==2023.3",
+    "starlette==0.27.0",
+    "aiofiles==0.23.2",
+    "psutil==5.9.6",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==7.4.3",
+    "pytest-asyncio==0.21.1",
+    "pytest-cov==4.1.0",
+    "httpx==0.25.2",
+    "black==23.9.1",
+    "isort==5.12.0",
+    "flake8==6.1.0",
+    "mypy==1.6.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/your-username/dev-digest"
+Repository = "https://github.com/your-username/dev-digest"
+Issues = "https://github.com/your-username/dev-digest/issues"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--verbose",
+    "-ra",
+    "--cov=app",
+    "--cov-report=html",
+    "--cov-report=term-missing",
+    "--cov-fail-under=85",
+]
+
+[tool.black]
+line-length = 100
+target-version = ['py39']
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 100
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+ignore_missing_imports = true

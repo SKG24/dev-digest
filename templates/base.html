@@ -1,0 +1,36 @@
+<!-- File: templates/base.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Dev Digest{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/style.css') }}">
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="nav-container">
+                <h1><a href="/">Dev Digest</a></h1>
+                <div class="nav-links">
+                    {% if request.session.get('user_id') %}
+                        <a href="/dashboard">Dashboard</a>
+                        <a href="/settings">Settings</a>
+                        <a href="/logout">Logout</a>
+                    {% else %}
+                        <a href="/signup">Get Started</a>
+                    {% endif %}
+                </div>
+            </div>
+        </nav>
+    </header>
+    
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    
+    <footer>
+        <p>&copy; 2024 Dev Digest. Simple. Professional. Effective.</p>
+    </footer>
+</body>
+</html>

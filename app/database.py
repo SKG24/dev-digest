@@ -1,0 +1,249 @@
+# File: app/main.py
+from fastapi import FastAPI, Request, Form, Depends, HTTPException, status
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from sqlalchemy.orm import Session
+import uvicorn
+from datetime import datetime, timedelta
+from starlette.middleware.sessions import SessionMiddleware
+import os
+from pathlib import Path
+
+from app.database import get_db, init_db
+from app.models import User, UserPreferences, DigestHistory
+from app.services.user_service import UserService
+from app.services.scheduler_service import SchedulerService
+from app.services.monitoring_service import MonitoringService
+from app.config import get_settings
+from app.logging_config import setup_logging
+from app.middleware import TimingMiddleware, SecurityMiddleware, RateLimitMiddleware
+
+# Setup logging
+logger = setup_logging()
+
+# Get settings
+settings = get_settings()
+
+# Create FastAPI app
+app = FastAPI(
+    title=settings.APP_NAME,
+    version=settings.APP_VERSION,
+    description="Personalized coding digest generator for developers"
+)
+
+# Add middleware
+app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
+app.add_middleware(TimingMiddleware)
+app.add_middleware(SecurityMiddleware)
+app.add_middleware(RateLimitMiddleware, calls=settings.RATE_LIMIT_REQUESTS, period=settings.RATE_LIMIT_WINDOW)
+
+# Mount static files
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Templates
+templates = Jinja2Templates(directory="templates")
+
+# Initialize services
+user_service = UserService()
+scheduler_service = SchedulerService()
+monitoring_service = MonitoringService()
+
+# Authentication dependency
+def get_current_user(request: Request, db: Session = Depends(get_db)):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return None
+    return user_service.get_user_by_id(db, user_id)
+
+def require_auth(request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+    return user
+
+# Admin authentication
+def require_admin(request: Request):
+    if not request.session.get("is_admin"):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+    return True
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database and start scheduler"""
+    logger.info("Starting Dev Digest application...")
+    init_db()
+    scheduler_service.start()
+    logger.info("Application started successfully")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Stop scheduler on shutdown"""
+    logger.info("Shutting down Dev Digest application...")
+    scheduler_service.stop()
+    logger.info("Application shutdown complete")
+
+# Routes
+@app.get("/", response_class=HTMLResponse)
+async def home(request: Request):
+    """Landing page"""
+    return templates.TemplateResponse("index.html", {"request": request})
+
+@app.get("/signup", response_class=HTMLResponse)
+async def signup_page(request: Request):
+    """Registration page"""
+    return templates.TemplateResponse("signup.html", {"request": request})
+
+@app.post("/signup")
+async def signup(
+    request: Request,
+    name: str = Form(...),
+    github_username: str = Form(...),
+    email: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    """Create new user"""
+    try:
+        user = user_service.create_user(db, name, github_username, email)
+        request.session["user_id"] = user.id
+        return RedirectResponse(url="/dashboard", status_code=status.HTTP_302_FOUND)
+    except ValueError as e:
+        return templates.TemplateResponse("signup.html", {
+            "request": request, 
+            "error": str(e)
+        })
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard(request: Request, user: User = Depends(require_auth), db: Session = Depends(get_db)):
+    """User dashboard"""
+    history = user_service.get_digest_history(db, user.id, limit=5)
+    stats = user_service.get_user_stats(db, user.id)
+    
+    return templates.TemplateResponse("dashboard.html", {
+        "request": request,
+        "user": user,
+        "history": history,
+        "stats": stats
+    })
+
+@app.get("/settings", response_class=HTMLResponse)
+async def settings_page(request: Request, user: User = Depends(require_auth), db: Session = Depends(get_db)):
+    """User settings page"""
+    preferences = user_service.get_user_preferences(db, user.id)
+    return templates.TemplateResponse("settings.html", {
+        "request": request,
+        "user": user,
+        "preferences": preferences
+    })
+
+@app.post("/settings")
+async def update_settings(
+    request: Request,
+    repositories: str = Form(""),
+    languages: str = Form(""),
+    stackoverflow_tags: str = Form(""),
+    digest_time: str = Form("20:00"),
+    timezone: str = Form("UTC"),
+    user: User = Depends(require_auth),
+    db: Session = Depends(get_db)
+):
+    """Update user preferences"""
+    try:
+        user_service.update_preferences(
+            db, user.id, repositories, languages, 
+            stackoverflow_tags, digest_time, timezone
+        )
+        return RedirectResponse(url="/settings?success=1", status_code=status.HTTP_302_FOUND)
+    except ValueError as e:
+        return templates.TemplateResponse("settings.html", {
+            "request": request,
+            "user": user,
+            "error": str(e)
+        })
+
+@app.post("/toggle-service")
+async def toggle_service(request: Request, user: User = Depends(require_auth), db: Session = Depends(get_db)):
+    """Toggle user service active/inactive"""
+    user_service.toggle_user_status(db, user.id)
+    return RedirectResponse(url="/dashboard", status_code=status.HTTP_302_FOUND)
+
+@app.get("/logout")
+async def logout(request: Request):
+    """Logout user"""
+    request.session.clear()
+    return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
+
+# Admin routes
+@app.get("/admin/login", response_class=HTMLResponse)
+async def admin_login_page(request: Request):
+    """Admin login page"""
+    return templates.TemplateResponse("admin/login.html", {"request": request})
+
+@app.post("/admin/login")
+async def admin_login(
+    request: Request,
+    password: str = Form(...)
+):
+    """Admin login"""
+    if password == settings.ADMIN_PASSWORD:
+        request.session["is_admin"] = True
+        return RedirectResponse(url="/admin", status_code=status.HTTP_302_FOUND)
+    else:
+        return templates.TemplateResponse("admin/login.html", {
+            "request": request,
+            "error": "Invalid password"
+        })
+
+@app.get("/admin", response_class=HTMLResponse)
+async def admin_dashboard(request: Request, db: Session = Depends(get_db), _: bool = Depends(require_admin)):
+    """Admin dashboard"""
+    users = user_service.get_all_users(db)
+    system_health = scheduler_service.get_system_health()
+    
+    return templates.TemplateResponse("admin/dashboard.html", {
+        "request": request,
+        "users": users,
+        "system_health": system_health
+    })
+
+@app.get("/admin/logout")
+async def admin_logout(request: Request):
+    """Admin logout"""
+    request.session.pop("is_admin", None)
+    return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
+
+# API endpoints
+@app.get("/api/health")
+async def health_check():
+    """Health check endpoint"""
+    return monitoring_service.get_health_check()
+
+@app.get("/api/metrics")
+async def get_metrics(db: Session = Depends(get_db)):
+    """Get system metrics"""
+    system_metrics = monitoring_service.get_system_metrics()
+    app_metrics = monitoring_service.get_application_metrics(db)
+    
+    return {
+        "system": system_metrics,
+        "application": app_metrics
+    }
+
+@app.post("/api/trigger-digest/{user_id}")
+async def trigger_digest(user_id: int, db: Session = Depends(get_db)):
+    """Manually trigger digest for user"""
+    from app.services.digest_generator import DigestGenerator
+    
+    digest_generator = DigestGenerator()
+    result = await digest_generator.generate_and_send_digest(db, user_id)
+    return {"success": result, "user_id": user_id}
+
+if __name__ == "__main__":
+    uvicorn.run(
+        app, 
+        host="0.0.0.0", 
+        port=8000,
+        log_level=settings.LOG_LEVEL.lower(),
+        reload=settings.DEBUG
+    )
+

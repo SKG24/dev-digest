@@ -1,0 +1,60 @@
+<!-- File: templates/dashboard.html -->
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Dev Digest{% endblock %}
+
+{% block content %}
+<section class="dashboard">
+    <div class="container">
+        <div class="dashboard-header">
+            <h2>Welcome back, {{ user.name }}!</h2>
+            <p>Your subscription is {% if user.is_active %}active{% else %}paused{% endif %}</p>
+        </div>
+        
+        <div class="dashboard-stats">
+            <div class="stat-card">
+                <h3>Total Digests</h3>
+                <p class="stat-number">{{ stats.total_digests }}</p>
+            </div>
+            <div class="stat-card">
+                <h3>Success Rate</h3>
+                <p class="stat-number">{{ "%.1f"|format(stats.success_rate) }}%</p>
+            </div>
+            <div class="stat-card">
+                <h3>Last Digest</h3>
+                <p class="stat-text">
+                    {% if stats.last_digest %}
+                        {{ stats.last_digest.sent_at.strftime('%B %d, %Y') }}
+                    {% else %}
+                        None yet
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+        
+        <div class="dashboard-actions">
+            <a href="/settings" class="btn-primary">Manage Settings</a>
+            <form method="post" action="/toggle-service" style="display: inline;">
+                <button type="submit" class="btn-secondary">
+                    {% if user.is_active %}Pause Service{% else %}Resume Service{% endif %}
+                </button>
+            </form>
+        </div>
+        
+        {% if history %}
+        <div class="recent-history">
+            <h3>Recent Digests</h3>
+            <div class="history-list">
+                {% for digest in history %}
+                <div class="history-item">
+                    <span class="history-date">{{ digest.sent_at.strftime('%B %d, %Y') }}</span>
+                    <span class="history-status status-{{ digest.status }}">{{ digest.status.title() }}</span>
+                    <span class="history-items">{{ digest.items_count }} items</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

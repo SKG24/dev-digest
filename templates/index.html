@@ -1,0 +1,31 @@
+<!-- File: templates/index.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero">
+    <div class="container">
+        <h1>Dev Digest</h1>
+        <p class="subtitle">Get personalized coding updates delivered daily</p>
+        
+        <div class="features">
+            <div class="feature">
+                <h3>GitHub Integration</h3>
+                <p>Track issues and pull requests from your favorite repositories</p>
+            </div>
+            <div class="feature">
+                <h3>Trending Repositories</h3>
+                <p>Stay updated with trending projects in your preferred languages</p>
+            </div>
+            <div class="feature">
+                <h3>Stack Overflow</h3>
+                <p>Get latest questions and discussions from your technology stack</p>
+            </div>
+        </div>
+        
+        <div class="cta">
+            <a href="/signup" class="btn-primary">Get Started</a>
+            <p class="cta-text">Daily digest delivered to your inbox at 8 PM</p>
+        </div>
+    </div>
+</section>
+{% endblock %}

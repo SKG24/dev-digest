@@ -1,0 +1,71 @@
+<!-- File: templates/settings.html -->
+{% extends "base.html" %}
+
+{% block title %}Settings - Dev Digest{% endblock %}
+
+{% block content %}
+<section class="settings">
+    <div class="container">
+        <h2>Account Settings</h2>
+        
+        {% if request.args.get('success') %}
+            <div class="success-message">Settings updated successfully!</div>
+        {% endif %}
+        
+        {% if error %}
+            <div class="error-message">{{ error }}</div>
+        {% endif %}
+        
+        <form method="post" action="/settings">
+            <div class="settings-section">
+                <h3>GitHub Repositories</h3>
+                <p class="help-text">Enter repository names (e.g., microsoft/vscode, facebook/react)</p>
+                <div class="form-group">
+                    <label for="repositories">Repositories to Track</label>
+                    <textarea id="repositories" name="repositories" rows="3" placeholder="microsoft/vscode, facebook/react, python/cpython">{{ preferences.repositories|default('', true)|replace('[', '')|replace(']', '')|replace('"', '')|replace("'", '') }}</textarea>
+                </div>
+            </div>
+            
+            <div class="settings-section">
+                <h3>Programming Languages</h3>
+                <p class="help-text">Languages for trending repository recommendations</p>
+                <div class="form-group">
+                    <label for="languages">Preferred Languages</label>
+                    <input type="text" id="languages" name="languages" placeholder="python, javascript, go" value="{{ preferences.languages|default('', true)|replace('[', '')|replace(']', '')|replace('"', '')|replace("'", '') }}">
+                </div>
+            </div>
+            
+            <div class="settings-section">
+                <h3>Stack Overflow</h3>
+                <p class="help-text">Tags to follow for question recommendations</p>
+                <div class="form-group">
+                    <label for="stackoverflow_tags">Tags to Follow</label>
+                    <input type="text" id="stackoverflow_tags" name="stackoverflow_tags" placeholder="python, react, docker" value="{{ preferences.stackoverflow_tags|default('', true)|replace('[', '')|replace(']', '')|replace('"', '')|replace("'", '') }}">
+                </div>
+            </div>
+            
+            <div class="settings-section">
+                <h3>Email Preferences</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="digest_time">Digest Time</label>
+                        <input type="time" id="digest_time" name="digest_time" value="{{ preferences.digest_time|default('20:00', true) }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="timezone">Timezone</label>
+                        <select id="timezone" name="timezone">
+                            <option value="UTC" {% if user.timezone == 'UTC' %}selected{% endif %}>UTC</option>
+                            <option value="America/New_York" {% if user.timezone == 'America/New_York' %}selected{% endif %}>Eastern Time</option>
+                            <option value="America/Chicago" {% if user.timezone == 'America/Chicago' %}selected{% endif %}>Central Time</option>
+                            <option value="America/Denver" {% if user.timezone == 'America/Denver' %}selected{% endif %}>Mountain Time</option>
+                            <option value="America/Los_Angeles" {% if user.timezone == 'America/Los_Angeles' %}selected{% endif %}>Pacific Time</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn-primary">Save Changes</button>
+        </form>
+    </div>
+</section>
+{% endblock %}
