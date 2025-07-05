@@ -1,4 +1,4 @@
-# File: app/database.py
+# File: app/database.py (UPDATED WITH UNSUBSCRIBE TOKEN)
 from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, Text, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, relationship
@@ -21,6 +21,7 @@ class User(Base):
     email = Column(String(100), nullable=False, unique=True)
     is_active = Column(Boolean, default=True)
     timezone = Column(String(50), default="UTC")
+    unsubscribe_token = Column(String(64), unique=True, index=True)  # New field
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -50,6 +51,7 @@ class DigestHistory(Base):
     status = Column(String(20), default="sent")  # sent, failed, skipped
     items_count = Column(Integer, default=0)
     error_message = Column(Text)
+    digest_type = Column(String(20), default="daily")  # daily, welcome
     
     user = relationship("User", back_populates="digest_history")
 

@@ -1,0 +1,54 @@
+<!-- File: templates/login.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Dev Digest</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/style.css') }}">
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="nav-container">
+                <h1><a href="{{ url_for('index') }}">Dev Digest</a></h1>
+                <div class="nav-links">
+                    <a href="{{ url_for('signup_page') }}">Sign Up</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+    
+    <main>
+        <section class="form-section">
+            <div class="container">
+                <div class="form-container">
+                    <h2>Welcome Back!</h2>
+                    <p>Enter your email to access your Dev Digest account</p>
+                    
+                    {% if error %}
+                        <div class="error-message">{{ error }}</div>
+                    {% endif %}
+                    
+                    <form method="post" action="{{ url_for('login') }}">
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
+                        
+                        <button type="submit" class="btn-primary">Sign In</button>
+                    </form>
+                    
+                    <div style="text-align: center; margin-top: 20px;">
+                        <p>Don't have an account? <a href="{{ url_for('signup_page') }}">Sign up here</a></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <footer>
+        <p>&copy; 2025 Dev Digest. Simple. Professional. Effective.</p>
+    </footer>
+</body>
+</html>

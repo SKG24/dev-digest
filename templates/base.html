@@ -18,6 +18,7 @@
                         <a href="{{ url_for('settings_page') }}">Settings</a>
                         <a href="{{ url_for('logout') }}">Logout</a>
                     {% else %}
+                        <a href="{{ url_for('login_page') }}">Login</a>
                         <a href="{{ url_for('signup_page') }}">Get Started</a>
                     {% endif %}
                 </div>

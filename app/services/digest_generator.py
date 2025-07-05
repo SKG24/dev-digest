@@ -1,4 +1,4 @@
-# File: app/services/digest_generator.py
+# File: app/services/digest_generator.py (UPDATED WITH WELCOME SUPPORT)
 import asyncio
 from sqlalchemy.orm import Session
 from app.services.github_service import GitHubService
@@ -20,7 +20,7 @@ class DigestGenerator:
         self.github_circuit_breaker = CircuitBreaker()
         self.stackoverflow_circuit_breaker = CircuitBreaker()
     
-    async def generate_and_send_digest(self, db: Session, user_id: int) -> bool:
+    async def generate_and_send_digest(self, db: Session, user_id: int, is_welcome: bool = False) -> bool:
         """Generate and send digest for a user"""
         try:
             # Get user and preferences
@@ -46,9 +46,18 @@ class DigestGenerator:
                           len(digest_data.get('trending_repos', [])) +
                           len(digest_data.get('stackoverflow_questions', [])))
             
-            # Send email if there's content
-            if total_items > 0:
-                success = self.email_service.send_digest_email(user.email, user.name, digest_data)
+            # For welcome digests, always send even if no content
+            should_send = is_welcome or total_items > 0
+            
+            # Send email if there's content or it's a welcome digest
+            if should_send:
+                success = self.email_service.send_digest_email(
+                    user.email, 
+                    user.name, 
+                    digest_data, 
+                    user.unsubscribe_token,
+                    is_welcome
+                )
                 status = "sent" if success else "failed"
                 error_message = None if success else "Failed to send email"
             else:
@@ -61,7 +70,8 @@ class DigestGenerator:
                 user_id=user_id,
                 status=status,
                 items_count=total_items,
-                error_message=error_message
+                error_message=error_message,
+                digest_type="welcome" if is_welcome else "daily"
             )
             db.add(history)
             db.commit()
@@ -76,7 +86,8 @@ class DigestGenerator:
                 user_id=user_id,
                 status="failed",
                 items_count=0,
-                error_message=str(e)
+                error_message=str(e),
+                digest_type="welcome" if is_welcome else "daily"
             )
             db.add(history)
             db.commit()

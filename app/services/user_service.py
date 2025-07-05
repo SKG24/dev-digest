@@ -1,9 +1,11 @@
-# File: app/services/user_service.py
+# File: app/services/user_service.py (UPDATED WITH LOGIN AND UNSUBSCRIBE)
 from sqlalchemy.orm import Session
 from app.database import User, UserPreferences, DigestHistory
 from datetime import datetime, timedelta
 import json
 import re
+import hashlib
+import secrets
 
 class UserService:
     def create_user(self, db: Session, name: str, github_username: str, email: str) -> User:
@@ -19,11 +21,15 @@ class UserService:
         if db.query(User).filter(User.github_username == github_username).first():
             raise ValueError("User with this GitHub username already exists")
         
+        # Generate unsubscribe token
+        unsubscribe_token = self._generate_unsubscribe_token(email)
+        
         # Create user
         user = User(
             name=name.strip(),
             github_username=github_username.strip(),
-            email=email.strip().lower()
+            email=email.strip().lower(),
+            unsubscribe_token=unsubscribe_token
         )
         db.add(user)
         db.commit()
@@ -37,6 +43,33 @@ class UserService:
             stackoverflow_tags=json.dumps(["python"])
         )
         db.add(preferences)
+        db.commit()
+        
+        return user
+    
+    def login_user(self, db: Session, email: str) -> User:
+        """Login user by email (simple email-based auth)"""
+        if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
+            raise ValueError("Invalid email format")
+        
+        user = db.query(User).filter(User.email == email.strip().lower()).first()
+        if not user:
+            raise ValueError("No account found with this email address")
+        
+        # Update last login
+        user.updated_at = datetime.utcnow()
+        db.commit()
+        
+        return user
+    
+    def unsubscribe_user(self, db: Session, token: str) -> User:
+        """Unsubscribe user via token"""
+        user = db.query(User).filter(User.unsubscribe_token == token).first()
+        if not user:
+            raise ValueError("Invalid unsubscribe token")
+        
+        user.is_active = False
+        user.updated_at = datetime.utcnow()
         db.commit()
         
         return user
@@ -123,3 +156,10 @@ class UserService:
         
         successful = sum(1 for h in history if h.status == "sent")
         return (successful / len(history)) * 100
+    
+    def _generate_unsubscribe_token(self, email: str) -> str:
+        """Generate unique unsubscribe token"""
+        # Create a unique token based on email and random data
+        random_part = secrets.token_hex(16)
+        token_data = f"{email}:{random_part}:{datetime.utcnow().isoformat()}"
+        return hashlib.sha256(token_data.encode()).hexdigest()[:32]

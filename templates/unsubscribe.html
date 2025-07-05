@@ -1,0 +1,50 @@
+<!-- File: templates/unsubscribe.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unsubscribe - Dev Digest</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="nav-container">
+                <h1><a href="/">Dev Digest</a></h1>
+            </div>
+        </nav>
+    </header>
+    
+    <main>
+        <section class="form-section">
+            <div class="container">
+                <div class="form-container">
+                    {% if success %}
+                        <h2>Successfully Unsubscribed</h2>
+                        <p>Hi {{ user_name }}, you have been successfully unsubscribed from Dev Digest.</p>
+                        <p>You will no longer receive daily digest emails.</p>
+                        <p>If you change your mind, you can always sign up again at <a href="/">devdigest.com</a>.</p>
+                        <p>Thank you for being part of our community!</p>
+                    {% else %}
+                        <h2>Unsubscribe Error</h2>
+                        <p>Sorry, we couldn't process your unsubscribe request.</p>
+                        {% if error %}
+                            <div class="error-message">{{ error }}</div>
+                        {% endif %}
+                        <p>Please try again or contact support if the problem persists.</p>
+                    {% endif %}
+                    
+                    <div style="text-align: center; margin-top: 20px;">
+                        <a href="/" class="btn-primary">Return to Homepage</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <footer>
+        <p>&copy; 2025 Dev Digest. Simple. Professional. Effective.</p>
+    </footer>
+</body>
+</html>

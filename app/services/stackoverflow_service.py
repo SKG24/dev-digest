@@ -2,50 +2,41 @@
 import requests
 from typing import List, Dict
 from datetime import datetime, timedelta
-import time
 
 class StackOverflowService:
     def __init__(self):
         self.base_url = "https://api.stackexchange.com/2.3"
-        self.site = "stackoverflow"
-        self.session = requests.Session()
     
-    def get_questions_by_tags(self, tags: List[str], days_back: int = 1) -> List[Dict]:
-        """Get recent questions for specified tags"""
+    def get_questions_by_tags(self, tags: List[str]) -> List[Dict]:
+        """Get recent questions for given tags"""
         questions = []
-        from_date = int((datetime.utcnow() - timedelta(days=days_back)).timestamp())
+        
+        # Join tags with semicolon for Stack Overflow API
+        tags_str = ";".join(tags[:5])  # Limit to 5 tags
         
         try:
             url = f"{self.base_url}/questions"
             params = {
-                "site": self.site,
-                "tagged": ";".join(tags),
-                "fromdate": from_date,
+                "site": "stackoverflow",
+                "tagged": tags_str,
                 "sort": "activity",
                 "order": "desc",
-                "pagesize": 20
+                "pagesize": 10,
+                "filter": "default"
             }
             
-            response = self.session.get(url, params=params, timeout=10)
-            response.raise_for_status()
-            
-            data = response.json()
-            
-            for question in data.get("items", []):
-                questions.append({
-                    "title": question["title"],
-                    "url": f"https://stackoverflow.com/questions/{question['question_id']}",
-                    "score": question["score"],
-                    "tags": question["tags"],
-                    "created_at": datetime.fromtimestamp(question["creation_date"]).isoformat(),
-                    "is_answered": question.get("is_answered", False)
-                })
-            
-            # Respect API rate limits
-            time.sleep(0.1)
-            
-        except requests.exceptions.RequestException as e:
+            response = requests.get(url, params=params, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                for item in data.get("items", []):
+                    questions.append({
+                        "title": item["title"],
+                        "score": item["score"],
+                        "tags": item["tags"],
+                        "url": item["link"],
+                        "creation_date": item["creation_date"]
+                    })
+        except Exception as e:
             print(f"Error fetching Stack Overflow questions: {e}")
         
-        return sorted(questions, key=lambda x: x["score"], reverse=True)
-
+        return questions[:10]  # Return top 10

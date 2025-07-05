@@ -1,4 +1,4 @@
-# File: app/main.py (UPDATED WITH ROUTE NAMES)
+# File: app/main.py (UPDATED WITH ALL FEATURES)
 from fastapi import FastAPI, Request, Form, Depends, HTTPException, status
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -13,6 +13,8 @@ from pathlib import Path
 from app.database import get_db, init_db, User, UserPreferences, DigestHistory
 from app.services.user_service import UserService
 from app.services.scheduler_service import SchedulerService
+from app.services.digest_generator import DigestGenerator
+from app.services.email_service import EmailService
 
 # Create FastAPI app
 app = FastAPI(title="Dev Digest", version="1.0.0")
@@ -29,6 +31,7 @@ templates = Jinja2Templates(directory="templates")
 # Initialize services
 user_service = UserService()
 scheduler_service = SchedulerService()
+email_service = EmailService()
 
 # Authentication dependency
 def get_current_user(request: Request, db: Session = Depends(get_db)):
@@ -60,11 +63,39 @@ async def shutdown_event():
     """Stop scheduler on shutdown"""
     scheduler_service.stop()
 
+# Health endpoint
+@app.get("/api/health")
+async def health_check():
+    """Health check endpoint"""
+    return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
+
 # Routes with explicit names
 @app.get("/", response_class=HTMLResponse, name="index")
 async def home(request: Request):
     """Landing page"""
     return templates.TemplateResponse("index.html", {"request": request})
+
+@app.get("/login", response_class=HTMLResponse, name="login_page")
+async def login_page(request: Request):
+    """Login page"""
+    return templates.TemplateResponse("login.html", {"request": request})
+
+@app.post("/login", name="login")
+async def login(
+    request: Request,
+    email: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    """Login user"""
+    try:
+        user = user_service.login_user(db, email)
+        request.session["user_id"] = user.id
+        return RedirectResponse(url="/dashboard", status_code=status.HTTP_302_FOUND)
+    except ValueError as e:
+        return templates.TemplateResponse("login.html", {
+            "request": request, 
+            "error": str(e)
+        })
 
 @app.get("/signup", response_class=HTMLResponse, name="signup_page")
 async def signup_page(request: Request):
@@ -82,6 +113,20 @@ async def signup(
     """Create new user"""
     try:
         user = user_service.create_user(db, name, github_username, email)
+        
+        # Send welcome email
+        try:
+            email_service.send_welcome_email(user.email, user.name)
+        except Exception as e:
+            print(f"Error sending welcome email: {e}")
+        
+        # Generate and send first digest
+        try:
+            digest_generator = DigestGenerator()
+            await digest_generator.generate_and_send_digest(db, user.id, is_welcome=True)
+        except Exception as e:
+            print(f"Error sending welcome digest: {e}")
+        
         request.session["user_id"] = user.id
         return RedirectResponse(url="/dashboard", status_code=status.HTTP_302_FOUND)
     except ValueError as e:
@@ -150,6 +195,24 @@ async def logout(request: Request):
     request.session.clear()
     return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
 
+# Unsubscribe functionality
+@app.get("/unsubscribe/{token}", name="unsubscribe")
+async def unsubscribe(token: str, db: Session = Depends(get_db)):
+    """Unsubscribe user via token"""
+    try:
+        user = user_service.unsubscribe_user(db, token)
+        return templates.TemplateResponse("unsubscribe.html", {
+            "request": None,
+            "success": True,
+            "user_name": user.name
+        })
+    except ValueError as e:
+        return templates.TemplateResponse("unsubscribe.html", {
+            "request": None,
+            "success": False,
+            "error": str(e)
+        })
+
 # Admin routes
 @app.get("/admin/login", response_class=HTMLResponse, name="admin_login_page")
 async def admin_login_page(request: Request):
@@ -193,8 +256,6 @@ async def admin_logout(request: Request):
 @app.post("/api/trigger-digest/{user_id}")
 async def trigger_digest(user_id: int, db: Session = Depends(get_db)):
     """Manually trigger digest for user"""
-    from app.services.digest_generator import DigestGenerator
-    
     digest_generator = DigestGenerator()
     result = await digest_generator.generate_and_send_digest(db, user_id)
     return {"success": result, "user_id": user_id}
