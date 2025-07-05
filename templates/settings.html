@@ -1,4 +1,4 @@
-<!-- File: templates/settings.html -->
+<!-- File: templates/settings.html (FIXED) -->
 {% extends "base.html" %}
 
 {% block title %}Settings - Dev Digest{% endblock %}
@@ -16,7 +16,7 @@
             <div class="error-message">{{ error }}</div>
         {% endif %}
         
-        <form method="post" action="/settings">
+        <form method="post" action="{{ url_for('settings') }}">
             <div class="settings-section">
                 <h3>GitHub Repositories</h3>
                 <p class="help-text">Enter repository names (e.g., microsoft/vscode, facebook/react)</p>

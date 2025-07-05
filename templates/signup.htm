@@ -1,4 +1,4 @@
-<!-- File: templates/signup.html -->
+<!-- File: templates/signup.html (FIXED) -->
 {% extends "base.html" %}
 
 {% block title %}Sign Up - Dev Digest{% endblock %}
@@ -14,7 +14,7 @@
                 <div class="error-message">{{ error }}</div>
             {% endif %}
             
-            <form method="post" action="/signup">
+            <form method="post" action="{{ url_for('signup') }}">
                 <div class="form-group">
                     <label for="name">Full Name</label>
                     <input type="text" id="name" name="name" required>

@@ -1,4 +1,4 @@
-<!-- File: templates/admin/login.html -->
+<!-- File: templates/admin/login.html (FIXED) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -21,7 +21,7 @@
         <div class="error-message">{{ error }}</div>
     {% endif %}
     
-    <form method="post" action="/admin/login">
+    <form method="post" action="{{ url_for('admin_login') }}">
         <div class="form-group">
             <label for="password">Admin Password</label>
             <input type="password" id="password" name="password" required>

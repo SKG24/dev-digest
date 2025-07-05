@@ -1,4 +1,4 @@
-<!-- File: templates/admin/dashboard.html -->
+<!-- File: templates/admin/dashboard.html (FIXED) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -65,6 +65,6 @@
         </tbody>
     </table>
     
-    <p><a href="/admin/logout">Logout</a></p>
+    <p><a href="{{ url_for('admin_logout') }}">Logout</a></p>
 </body>
 </html>

@@ -1,4 +1,4 @@
-<!-- File: templates/dashboard.html -->
+<!-- File: templates/dashboard.html (FIXED) -->
 {% extends "base.html" %}
 
 {% block title %}Dashboard - Dev Digest{% endblock %}
@@ -33,8 +33,8 @@
         </div>
         
         <div class="dashboard-actions">
-            <a href="/settings" class="btn-primary">Manage Settings</a>
-            <form method="post" action="/toggle-service" style="display: inline;">
+            <a href="{{ url_for('settings') }}" class="btn-primary">Manage Settings</a>
+            <form method="post" action="{{ url_for('toggle_service') }}" style="display: inline;">
                 <button type="submit" class="btn-secondary">
                     {% if user.is_active %}Pause Service{% else %}Resume Service{% endif %}
                 </button>
