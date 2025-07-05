@@ -1,5 +1,4 @@
-version: '3.8'
-
+# File: docker-compose.yml
 services:
   web:
     build: 

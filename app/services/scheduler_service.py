@@ -117,3 +117,4 @@ class SchedulerService:
             }
         finally:
             db.close()
+

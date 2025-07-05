@@ -10,33 +10,15 @@ from starlette.middleware.sessions import SessionMiddleware
 import os
 from pathlib import Path
 
-from app.database import get_db, init_db
-from app.models import User, UserPreferences, DigestHistory
+from app.database import get_db, init_db, User, UserPreferences, DigestHistory
 from app.services.user_service import UserService
 from app.services.scheduler_service import SchedulerService
-from app.services.monitoring_service import MonitoringService
-from app.config import get_settings
-from app.logging_config import setup_logging
-from app.middleware import TimingMiddleware, SecurityMiddleware, RateLimitMiddleware
-
-# Setup logging
-logger = setup_logging()
-
-# Get settings
-settings = get_settings()
 
 # Create FastAPI app
-app = FastAPI(
-    title=settings.APP_NAME,
-    version=settings.APP_VERSION,
-    description="Personalized coding digest generator for developers"
-)
+app = FastAPI(title="Dev Digest", version="1.0.0")
 
-# Add middleware
-app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
-app.add_middleware(TimingMiddleware)
-app.add_middleware(SecurityMiddleware)
-app.add_middleware(RateLimitMiddleware, calls=settings.RATE_LIMIT_REQUESTS, period=settings.RATE_LIMIT_WINDOW)
+# Add session middleware
+app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY", "your-secret-key-here"))
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -47,7 +29,6 @@ templates = Jinja2Templates(directory="templates")
 # Initialize services
 user_service = UserService()
 scheduler_service = SchedulerService()
-monitoring_service = MonitoringService()
 
 # Authentication dependency
 def get_current_user(request: Request, db: Session = Depends(get_db)):
@@ -71,17 +52,13 @@ def require_admin(request: Request):
 @app.on_event("startup")
 async def startup_event():
     """Initialize database and start scheduler"""
-    logger.info("Starting Dev Digest application...")
     init_db()
     scheduler_service.start()
-    logger.info("Application started successfully")
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Stop scheduler on shutdown"""
-    logger.info("Shutting down Dev Digest application...")
     scheduler_service.stop()
-    logger.info("Application shutdown complete")
 
 # Routes
 @app.get("/", response_class=HTMLResponse)
@@ -185,7 +162,7 @@ async def admin_login(
     password: str = Form(...)
 ):
     """Admin login"""
-    if password == settings.ADMIN_PASSWORD:
+    if password == os.getenv("ADMIN_PASSWORD", "admin123"):
         request.session["is_admin"] = True
         return RedirectResponse(url="/admin", status_code=status.HTTP_302_FOUND)
     else:
@@ -213,22 +190,6 @@ async def admin_logout(request: Request):
     return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
 
 # API endpoints
-@app.get("/api/health")
-async def health_check():
-    """Health check endpoint"""
-    return monitoring_service.get_health_check()
-
-@app.get("/api/metrics")
-async def get_metrics(db: Session = Depends(get_db)):
-    """Get system metrics"""
-    system_metrics = monitoring_service.get_system_metrics()
-    app_metrics = monitoring_service.get_application_metrics(db)
-    
-    return {
-        "system": system_metrics,
-        "application": app_metrics
-    }
-
 @app.post("/api/trigger-digest/{user_id}")
 async def trigger_digest(user_id: int, db: Session = Depends(get_db)):
     """Manually trigger digest for user"""
@@ -239,11 +200,4 @@ async def trigger_digest(user_id: int, db: Session = Depends(get_db)):
     return {"success": result, "user_id": user_id}
 
 if __name__ == "__main__":
-    uvicorn.run(
-        app, 
-        host="0.0.0.0", 
-        port=8000,
-        log_level=settings.LOG_LEVEL.lower(),
-        reload=settings.DEBUG
-    )
-
+    uvicorn.run(app, host="0.0.0.0", port=8000)
