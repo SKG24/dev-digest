@@ -77,21 +77,6 @@ SECRET_KEY=your-secret-key-here
 ADMIN_PASSWORD=your-admin-password
 APP_URL=http://localhost:8000
 ```
-
-### GitHub Token Setup
-
-1. Go to GitHub Settings > Developer settings > Personal access tokens
-2. Generate a new token with these permissions:
-   - `repo:status`
-   - `public_repo`
-3. Copy the token to your `.env` file
-
-### Email Setup (Gmail)
-
-1. Enable 2-factor authentication
-2. Generate an app password
-3. Use the app password in your `.env` file
-
 ## Usage
 
 ### For Users
@@ -138,35 +123,7 @@ python -m pytest tests/test_services.py -v
 python -m pytest tests/ --cov=app --cov-report=html
 ```
 
-## Performance Metrics
-
-### Response Times
-- **Web Pages**: <500ms load time
-- **API Endpoints**: <200ms response time
-- **Digest Generation**: <5s per user
-- **Email Delivery**: <10s per user
-
-### Scalability
-- **Users**: Support 1000+ active users
-- **Concurrent Processing**: 50+ digests simultaneously
-- **Memory Usage**: <100MB for 100 active users
-- **Database**: Optimized SQLite with indexing
-
-### Reliability
-- **Uptime**: 99.9% web interface availability
-- **Digest Delivery**: 99%+ success rate
-- **Error Recovery**: Automatic retry for failed operations
-- **Fault Tolerance**: Exponential backoff and circuit breakers
-
-## Architecture
-
-### Tech Stack
-- **Backend**: FastAPI with Python 3.9+
-- **Database**: SQLite with SQLAlchemy ORM
-- **Frontend**: HTML, CSS, JavaScript (Vanilla)
-- **Email**: SMTP with HTML templates
-- **Scheduling**: APScheduler
-- **Containerization**: Docker + Docker Compose
+**Test is not updated as per the latest file structure.**
 
 ### Project Structure
 ```
@@ -182,3 +139,35 @@ dev-digest/
 ├── docker/                  # Docker configuration
 └── requirements.txt         # Python dependencies
 ```
+
+### Visuals
+
+1. Client Dashboard
+
+   ![screenshot](https://github.com/SKG24/dev-digest/blob/main/screenshot_results/Screenshot%202025-07-05%20at%205.47.39%20PM.png)
+
+2. Client settings to change preferences
+
+   ![screenshot](https://github.com/SKG24/dev-digest/blob/main/screenshot_results/Screenshot%202025-07-05%20at%205.47.51%20PM.png)
+   ![screenshot](https://github.com/SKG24/dev-digest/blob/main/screenshot_results/Screenshot%202025-07-05%20at%205.47.59%20PM.png)
+
+3. Main Dashboard
+
+   ![screenshot](https://github.com/SKG24/dev-digest/blob/main/screenshot_results/Screenshot%202025-07-05%20at%205.48.16%20PM.png)
+
+4. Admin Dashboard
+
+   ![screenshot](https://github.com/SKG24/dev-digest/blob/main/screenshot_results/Screenshot%202025-07-05%20at%205.48.23%20PM.png)
+
+5. Email sent to Client
+
+   ![screenshot](https://github.com/SKG24/dev-digest/blob/main/screenshot_results/Screenshot%202025-07-05%20at%205.49.13%20PM.png)
+   ![screenshot](https://github.com/SKG24/dev-digest/blob/main/screenshot_results/Screenshot%202025-07-05%20at%205.48.43%20PM.png)
+   ![screenshot](https://github.com/SKG24/dev-digest/blob/main/screenshot_results/Screenshot%202025-07-05%20at%205.48.50%20PM.png)
+   ![screenshot](https://github.com/SKG24/dev-digest/blob/main/screenshot_results/Screenshot%202025-07-05%20at%205.48.55%20PM.png)
+   ![screenshot](https://github.com/SKG24/dev-digest/blob/main/screenshot_results/Screenshot%202025-07-05%20at%205.49.03%20PM.png)
+   
+
+
+
+   
