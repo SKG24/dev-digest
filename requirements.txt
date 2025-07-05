@@ -1,19 +1,16 @@
-# File: requirements.txt (UPDATED WITH NEW DEPENDENCIES)
+# File: requirements.txt (PYTHON 3.9 COMPATIBLE)
 # FastAPI and web framework
 fastapi==0.104.1
 uvicorn==0.24.0
 python-multipart==0.0.6
 jinja2==3.1.2
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
+starlette==0.27.0
 
 # Database
 sqlalchemy==1.4.45
-alembic==1.13.1
 
 # HTTP requests
 requests==2.31.0
-httpx==0.25.2
 
 # Email parsing and RSS
 feedparser==6.0.10
@@ -22,23 +19,12 @@ beautifulsoup4==4.12.2
 # Task scheduling
 APScheduler==3.10.4
 
-# Logging and monitoring
-python-json-logger==2.0.7
-
-# Development dependencies
-pytest==7.4.3
-pytest-asyncio==0.21.1
-pytest-cov==4.1.0
-
-# Security
-python-dotenv==1.0.0
-cryptography==41.0.8
+# Security (Python 3.9 compatible versions)
+python-dotenv==0.19.2
+cryptography==3.4.8
 
 # HTML parsing
 lxml==4.9.3
 
 # Date/time handling
 python-dateutil==2.8.2
-
-# Async support
-asyncio==3.4.3
