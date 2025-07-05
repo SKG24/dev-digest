@@ -1,10 +1,11 @@
-# File: requirements.txt (PYTHON 3.9 COMPATIBLE)
+# File: requirements.txt (FIXED WITH ALL DEPENDENCIES)
 # FastAPI and web framework
 fastapi==0.104.1
 uvicorn==0.24.0
 python-multipart==0.0.6
 jinja2==3.1.2
 starlette==0.27.0
+itsdangerous==2.1.2
 
 # Database
 sqlalchemy==1.4.45
@@ -28,3 +29,6 @@ lxml==4.9.3
 
 # Date/time handling
 python-dateutil==2.8.2
+
+# Additional dependencies for email templates
+markupsafe==2.1.1
