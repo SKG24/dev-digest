@@ -1,4 +1,4 @@
-# File: app/main.py
+# File: app/main.py (UPDATED WITH ROUTE NAMES)
 from fastapi import FastAPI, Request, Form, Depends, HTTPException, status
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -60,18 +60,18 @@ async def shutdown_event():
     """Stop scheduler on shutdown"""
     scheduler_service.stop()
 
-# Routes
-@app.get("/", response_class=HTMLResponse)
+# Routes with explicit names
+@app.get("/", response_class=HTMLResponse, name="index")
 async def home(request: Request):
     """Landing page"""
     return templates.TemplateResponse("index.html", {"request": request})
 
-@app.get("/signup", response_class=HTMLResponse)
+@app.get("/signup", response_class=HTMLResponse, name="signup_page")
 async def signup_page(request: Request):
     """Registration page"""
     return templates.TemplateResponse("signup.html", {"request": request})
 
-@app.post("/signup")
+@app.post("/signup", name="signup")
 async def signup(
     request: Request,
     name: str = Form(...),
@@ -90,7 +90,7 @@ async def signup(
             "error": str(e)
         })
 
-@app.get("/dashboard", response_class=HTMLResponse)
+@app.get("/dashboard", response_class=HTMLResponse, name="dashboard")
 async def dashboard(request: Request, user: User = Depends(require_auth), db: Session = Depends(get_db)):
     """User dashboard"""
     history = user_service.get_digest_history(db, user.id, limit=5)
@@ -103,7 +103,7 @@ async def dashboard(request: Request, user: User = Depends(require_auth), db: Se
         "stats": stats
     })
 
-@app.get("/settings", response_class=HTMLResponse)
+@app.get("/settings", response_class=HTMLResponse, name="settings_page")
 async def settings_page(request: Request, user: User = Depends(require_auth), db: Session = Depends(get_db)):
     """User settings page"""
     preferences = user_service.get_user_preferences(db, user.id)
@@ -113,7 +113,7 @@ async def settings_page(request: Request, user: User = Depends(require_auth), db
         "preferences": preferences
     })
 
-@app.post("/settings")
+@app.post("/settings", name="settings")
 async def update_settings(
     request: Request,
     repositories: str = Form(""),
@@ -138,25 +138,25 @@ async def update_settings(
             "error": str(e)
         })
 
-@app.post("/toggle-service")
+@app.post("/toggle-service", name="toggle_service")
 async def toggle_service(request: Request, user: User = Depends(require_auth), db: Session = Depends(get_db)):
     """Toggle user service active/inactive"""
     user_service.toggle_user_status(db, user.id)
     return RedirectResponse(url="/dashboard", status_code=status.HTTP_302_FOUND)
 
-@app.get("/logout")
+@app.get("/logout", name="logout")
 async def logout(request: Request):
     """Logout user"""
     request.session.clear()
     return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
 
 # Admin routes
-@app.get("/admin/login", response_class=HTMLResponse)
+@app.get("/admin/login", response_class=HTMLResponse, name="admin_login_page")
 async def admin_login_page(request: Request):
     """Admin login page"""
     return templates.TemplateResponse("admin/login.html", {"request": request})
 
-@app.post("/admin/login")
+@app.post("/admin/login", name="admin_login")
 async def admin_login(
     request: Request,
     password: str = Form(...)
@@ -171,7 +171,7 @@ async def admin_login(
             "error": "Invalid password"
         })
 
-@app.get("/admin", response_class=HTMLResponse)
+@app.get("/admin", response_class=HTMLResponse, name="admin_dashboard")
 async def admin_dashboard(request: Request, db: Session = Depends(get_db), _: bool = Depends(require_admin)):
     """Admin dashboard"""
     users = user_service.get_all_users(db)
@@ -183,7 +183,7 @@ async def admin_dashboard(request: Request, db: Session = Depends(get_db), _: bo
         "system_health": system_health
     })
 
-@app.get("/admin/logout")
+@app.get("/admin/logout", name="admin_logout")
 async def admin_logout(request: Request):
     """Admin logout"""
     request.session.pop("is_admin", None)

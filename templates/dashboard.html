@@ -1,4 +1,4 @@
-<!-- File: templates/dashboard.html (FIXED) -->
+<!-- File: templates/dashboard.html (PROPER FASTAPI SYNTAX) -->
 {% extends "base.html" %}
 
 {% block title %}Dashboard - Dev Digest{% endblock %}
@@ -33,7 +33,7 @@
         </div>
         
         <div class="dashboard-actions">
-            <a href="{{ url_for('settings') }}" class="btn-primary">Manage Settings</a>
+            <a href="{{ url_for('settings_page') }}" class="btn-primary">Manage Settings</a>
             <form method="post" action="{{ url_for('toggle_service') }}" style="display: inline;">
                 <button type="submit" class="btn-secondary">
                     {% if user.is_active %}Pause Service{% else %}Resume Service{% endif %}
