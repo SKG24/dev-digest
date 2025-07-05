@@ -1,7 +1,6 @@
 # File: app/services/scheduler_service.py
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
-from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from sqlalchemy.orm import Session
 from app.database import get_db, User, UserPreferences, DigestHistory
 from app.services.digest_generator import DigestGenerator
@@ -9,18 +8,39 @@ import asyncio
 import logging
 from datetime import datetime, timedelta
 import json
-import pytz
 
 logger = logging.getLogger(__name__)
 
+# Global function to avoid serialization issues
+def run_daily_digests():
+    """Run daily digest generation for all active users"""
+    logger.info("Starting daily digest generation")
+    
+    try:
+        db = next(get_db())
+        active_users = db.query(User).filter(User.is_active == True).all()
+        
+        digest_generator = DigestGenerator()
+        
+        for user in active_users:
+            try:
+                # Run digest generation in event loop
+                asyncio.run(digest_generator.generate_and_send_digest(db, user.id))
+                logger.info(f"Digest generated for user {user.id}")
+            except Exception as e:
+                logger.error(f"Error generating digest for user {user.id}: {e}")
+        
+        logger.info(f"Daily digest generation completed for {len(active_users)} users")
+        
+    except Exception as e:
+        logger.error(f"Error in daily digest generation: {e}")
+    finally:
+        db.close()
+
 class SchedulerService:
     def __init__(self):
-        jobstores = {
-            'default': SQLAlchemyJobStore(url='sqlite:///data/scheduler.db')
-        }
-        
-        self.scheduler = BackgroundScheduler(jobstores=jobstores)
-        self.digest_generator = DigestGenerator()
+        # Use default memory jobstore to avoid serialization issues
+        self.scheduler = BackgroundScheduler()
         self.is_running = False
     
     def start(self):
@@ -29,9 +49,9 @@ class SchedulerService:
             self.scheduler.start()
             self.is_running = True
             
-            # Schedule daily digest job
+            # Schedule daily digest job using global function
             self.scheduler.add_job(
-                func=self.run_daily_digests,
+                func=run_daily_digests,  # Use global function instead of instance method
                 trigger=CronTrigger(hour=20, minute=0),  # 8 PM UTC
                 id='daily_digests',
                 replace_existing=True
@@ -45,29 +65,6 @@ class SchedulerService:
             self.scheduler.shutdown()
             self.is_running = False
             logger.info("Scheduler stopped")
-    
-    def run_daily_digests(self):
-        """Run daily digest generation for all active users"""
-        logger.info("Starting daily digest generation")
-        
-        try:
-            db = next(get_db())
-            active_users = db.query(User).filter(User.is_active == True).all()
-            
-            for user in active_users:
-                try:
-                    # Run digest generation in event loop
-                    asyncio.run(self.digest_generator.generate_and_send_digest(db, user.id))
-                    logger.info(f"Digest generated for user {user.id}")
-                except Exception as e:
-                    logger.error(f"Error generating digest for user {user.id}: {e}")
-            
-            logger.info(f"Daily digest generation completed for {len(active_users)} users")
-            
-        except Exception as e:
-            logger.error(f"Error in daily digest generation: {e}")
-        finally:
-            db.close()
     
     def get_system_health(self) -> dict:
         """Get system health information"""
@@ -117,4 +114,3 @@ class SchedulerService:
             }
         finally:
             db.close()
-
