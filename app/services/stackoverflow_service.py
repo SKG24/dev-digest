@@ -1,50 +1,102 @@
-# File: app/services/stackoverflow_service.py
-import requests
-from typing import List, Dict
-from datetime import datetime, timedelta
-import time
+# File: app/services/email_service.py
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from typing import Dict, List
+import os
+from datetime import datetime
 
-class StackOverflowService:
+class EmailService:
     def __init__(self):
-        self.base_url = "https://api.stackexchange.com/2.3"
-        self.site = "stackoverflow"
-        self.session = requests.Session()
+        self.smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com")
+        self.smtp_port = int(os.getenv("SMTP_PORT", "587"))
+        self.smtp_user = os.getenv("SMTP_USER")
+        self.smtp_password = os.getenv("SMTP_PASSWORD")
+        self.from_email = os.getenv("EMAIL_FROM", self.smtp_user)
     
-    def get_questions_by_tags(self, tags: List[str], days_back: int = 1) -> List[Dict]:
-        """Get recent questions for specified tags"""
-        questions = []
-        from_date = int((datetime.utcnow() - timedelta(days=days_back)).timestamp())
-        
+    def send_digest_email(self, to_email: str, user_name: str, digest_data: Dict) -> bool:
+        """Send digest email to user"""
         try:
-            url = f"{self.base_url}/questions"
-            params = {
-                "site": self.site,
-                "tagged": ";".join(tags),
-                "fromdate": from_date,
-                "sort": "activity",
-                "order": "desc",
-                "pagesize": 20
-            }
+            msg = MIMEMultipart()
+            msg['From'] = self.from_email
+            msg['To'] = to_email
+            msg['Subject'] = f"Your Dev Digest - {datetime.now().strftime('%B %d, %Y')}"
             
-            response = self.session.get(url, params=params, timeout=10)
-            response.raise_for_status()
+            # Create email body
+            body = self._create_email_body(user_name, digest_data)
+            msg.attach(MIMEText(body, 'plain'))
             
-            data = response.json()
+            # Send email
+            with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
+                server.starttls()
+                server.login(self.smtp_user, self.smtp_password)
+                server.send_message(msg)
             
-            for question in data.get("items", []):
-                questions.append({
-                    "title": question["title"],
-                    "url": f"https://stackoverflow.com/questions/{question['question_id']}",
-                    "score": question["score"],
-                    "tags": question["tags"],
-                    "created_at": datetime.fromtimestamp(question["creation_date"]).isoformat(),
-                    "is_answered": question.get("is_answered", False)
-                })
+            return True
             
-            # Respect API rate limits
-            time.sleep(0.1)
-            
-        except requests.exceptions.RequestException as e:
-            print(f"Error fetching Stack Overflow questions: {e}")
+        except Exception as e:
+            print(f"Error sending email to {to_email}: {e}")
+            return False
+    
+    def _create_email_body(self, user_name: str, digest_data: Dict) -> str:
+        """Create email body from digest data"""
+        body = f"""
+Hello {user_name},
+
+Here's your daily development digest for {datetime.now().strftime('%B %d, %Y')}:
+
+"""
         
-        return sorted(questions, key=lambda x: x["score"], reverse=True)
+        # GitHub Issues
+        issues = digest_data.get('github_issues', [])
+        if issues:
+            body += "GITHUB ISSUES\n"
+            body += "=" * 50 + "\n"
+            for issue in issues[:5]:
+                body += f"• {issue['title']}\n"
+                body += f"  Repository: {issue['repository']}\n"
+                body += f"  Author: {issue['user']}\n"
+                body += f"  URL: {issue['url']}\n\n"
+        
+        # Pull Requests
+        pulls = digest_data.get('github_pulls', [])
+        if pulls:
+            body += "PULL REQUESTS\n"
+            body += "=" * 50 + "\n"
+            for pull in pulls[:5]:
+                body += f"• {pull['title']}\n"
+                body += f"  Repository: {pull['repository']}\n"
+                body += f"  Author: {pull['user']}\n"
+                body += f"  URL: {pull['url']}\n\n"
+        
+        # Trending Repositories
+        trending = digest_data.get('trending_repos', [])
+        if trending:
+            body += "TRENDING REPOSITORIES\n"
+            body += "=" * 50 + "\n"
+            for repo in trending[:5]:
+                body += f"• {repo['name']} ({repo['language']})\n"
+                body += f"  Stars: {repo['stars']}\n"
+                body += f"  {repo['description']}\n"
+                body += f"  URL: {repo['url']}\n\n"
+        
+        # Stack Overflow Questions
+        questions = digest_data.get('stackoverflow_questions', [])
+        if questions:
+            body += "STACK OVERFLOW QUESTIONS\n"
+            body += "=" * 50 + "\n"
+            for question in questions[:5]:
+                body += f"• {question['title']}\n"
+                body += f"  Score: {question['score']}\n"
+                body += f"  Tags: {', '.join(question['tags'])}\n"
+                body += f"  URL: {question['url']}\n\n"
+        
+        body += f"""
+Generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} UTC
+
+---
+Dev Digest - Your personalized coding updates
+To unsubscribe or update preferences, visit: {os.getenv('APP_URL', 'http://localhost:8000')}/settings
+"""
+        
+        return body

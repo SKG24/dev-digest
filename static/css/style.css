@@ -1,3 +1,4 @@
+/* File: static/css/style.css */
 :root {
     --primary-black: #000000;
     --primary-white: #ffffff;
@@ -375,60 +376,6 @@ header {
 .history-items {
     color: var(--text-gray);
     font-size: 0.9rem;
-}
-
-/* Admin */
-.admin-dashboard {
-    padding: 4rem 0;
-}
-
-.system-status {
-    background-color: var(--accent-gray);
-    padding: 2rem;
-    border-radius: 8px;
-    margin-bottom: 3rem;
-}
-
-.system-status h3 {
-    color: var(--primary-black);
-    margin-bottom: 1rem;
-}
-
-.system-status p {
-    margin-bottom: 0.5rem;
-}
-
-.users-section {
-    margin-top: 3rem;
-}
-
-.users-table {
-    background-color: var(--primary-white);
-    border-radius: 8px;
-    border: 1px solid var(--border-gray);
-    overflow-x: auto;
-}
-
-.users-table table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.users-table th,
-.users-table td {
-    padding: 1rem;
-    text-align: left;
-    border-bottom: 1px solid var(--border-gray);
-}
-
-.users-table th {
-    background-color: var(--accent-gray);
-    color: var(--primary-black);
-    font-weight: 600;
-}
-
-.users-table tr:last-child td {
-    border-bottom: none;
 }
 
 /* Messages */
