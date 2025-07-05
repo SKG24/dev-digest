@@ -37,8 +37,8 @@ def test_gmail_smtp(email, app_password):
         return False
 
 # Replace with your credentials
-email = "gupta.sanat24@gmail.com"
-app_password = "edvxlpruyyksndrs"
+email = "your_email"
+app_password = "your_password"
 
 if __name__ == "__main__":
     test_gmail_smtp(email, app_password)
