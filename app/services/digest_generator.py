@@ -1,4 +1,4 @@
-# File: app/services/digest_generator.py (UPDATED WITH WELCOME SUPPORT)
+# File: app/services/digest_generator.py (UPDATED WITH BLOG ARTICLES)
 import asyncio
 from sqlalchemy.orm import Session
 from app.services.github_service import GitHubService
@@ -35,16 +35,18 @@ class DigestGenerator:
             # Parse preferences
             repositories = json.loads(preferences.repositories or "[]")
             languages = json.loads(preferences.languages or "[]")
-            stackoverflow_tags = json.loads(preferences.stackoverflow_tags or "[]")
+            content_categories = json.loads(preferences.content_categories or '["career-advice", "ai-ml", "opensource", "productivity"]')
             
             # Fetch data from all sources
-            digest_data = await self._fetch_digest_data(repositories, languages, stackoverflow_tags)
+            digest_data = await self._fetch_digest_data(repositories, languages, content_categories)
             
             # Count total items
-            total_items = (len(digest_data.get('github_issues', [])) +
-                          len(digest_data.get('github_pulls', [])) +
-                          len(digest_data.get('trending_repos', [])) +
-                          len(digest_data.get('stackoverflow_questions', [])))
+            total_items = (
+                len(digest_data.get('github_issues', [])) +
+                len(digest_data.get('github_pulls', [])) +
+                len(digest_data.get('trending_repos', [])) +
+                sum(len(articles) for articles in digest_data.get('blog_articles', {}).values())
+            )
             
             # For welcome digests, always send even if no content
             should_send = is_welcome or total_items > 0
@@ -94,7 +96,7 @@ class DigestGenerator:
             
             return False
     
-    async def _fetch_digest_data(self, repositories: list, languages: list, stackoverflow_tags: list) -> dict:
+    async def _fetch_digest_data(self, repositories: list, languages: list, content_categories: list) -> dict:
         """Fetch data from all sources with fault tolerance"""
         digest_data = {}
         
@@ -117,13 +119,13 @@ class DigestGenerator:
                 'trending_repos': []
             })
         
-        # Fetch Stack Overflow data
+        # Fetch Stack Overflow blog articles
         try:
-            stackoverflow_questions = await self._fetch_stackoverflow_questions(stackoverflow_tags)
-            digest_data['stackoverflow_questions'] = stackoverflow_questions
+            blog_articles = await self._fetch_blog_articles(content_categories)
+            digest_data['blog_articles'] = blog_articles
         except Exception as e:
-            logger.error(f"Error fetching Stack Overflow data: {e}")
-            digest_data['stackoverflow_questions'] = []
+            logger.error(f"Error fetching blog articles: {e}")
+            digest_data['blog_articles'] = {}
         
         return digest_data
     
@@ -158,11 +160,11 @@ class DigestGenerator:
         )
     
     @retry_with_backoff(max_retries=3)
-    async def _fetch_stackoverflow_questions(self, tags: list) -> list:
-        """Fetch Stack Overflow questions with retries"""
-        if not tags:
-            return []
+    async def _fetch_blog_articles(self, content_categories: list) -> dict:
+        """Fetch Stack Overflow blog articles with retries"""
+        if not content_categories:
+            return {}
         
         return await asyncio.get_event_loop().run_in_executor(
-            None, self.stackoverflow_service.get_questions_by_tags, tags
+            None, self.stackoverflow_service.get_blog_articles, content_categories
         )

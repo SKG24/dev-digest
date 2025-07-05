@@ -1,0 +1,141 @@
+<!-- File: templates/email/digest_email.html -->
+{% extends "email/base_email.html" %}
+
+{% block title %}{% if is_welcome %}Welcome to Dev Digest!{% else %}Your Dev Digest - {{ date }}{% endif %}{% endblock %}
+
+{% block header_title %}
+    {% if is_welcome %}
+        Welcome to Dev Digest! 🚀
+    {% else %}
+        Dev Digest
+    {% endif %}
+{% endblock %}
+
+{% block header_subtitle %}
+    {% if is_welcome %}
+        {{ user_name }}, here's your first personalized digest
+    {% else %}
+        {{ user_name }}, here's your digest for {{ date }}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    {% if is_welcome %}
+        <div class="welcome-message">
+            <h2 style="margin: 0 0 10px 0;">Welcome to Dev Digest! 🎉</h2>
+            <p style="margin: 0;">We're excited to have you join our community of developers. Here's your first personalized digest!</p>
+        </div>
+    {% endif %}
+
+    {% if digest_data.github_issues or digest_data.github_pulls or digest_data.trending_repos %}
+        <div class="section">
+            <h2 class="section-title">
+                <span class="section-icon">🐙</span>
+                GitHub Updates
+            </h2>
+            
+            {% if digest_data.github_issues %}
+                <h3 style="color: #2c3e50; margin-bottom: 10px;">📋 Recent Issues</h3>
+                {% for issue in digest_data.github_issues[:3] %}
+                    <div class="item">
+                        <div class="item-title">{{ issue.title }}</div>
+                        <div class="item-meta">
+                            <strong>{{ issue.repository }}</strong> • by {{ issue.user }}
+                        </div>
+                        <a href="{{ issue.url }}" class="item-link">View Issue</a>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% if digest_data.github_pulls %}
+                <h3 style="color: #2c3e50; margin-bottom: 10px;">🔄 Pull Requests</h3>
+                {% for pull in digest_data.github_pulls[:3] %}
+                    <div class="item">
+                        <div class="item-title">{{ pull.title }}</div>
+                        <div class="item-meta">
+                            <strong>{{ pull.repository }}</strong> • by {{ pull.user }}
+                        </div>
+                        <a href="{{ pull.url }}" class="item-link">View PR</a>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% if digest_data.trending_repos %}
+                <h3 style="color: #2c3e50; margin-bottom: 10px;">🌟 Trending Repositories</h3>
+                {% for repo in digest_data.trending_repos[:3] %}
+                    <div class="item">
+                        <div class="item-title">{{ repo.name }}</div>
+                        <div class="item-meta">
+                            {{ repo.language }} • ⭐ {{ repo.stars }} stars
+                        </div>
+                        <div class="item-description">{{ repo.description }}</div>
+                        <a href="{{ repo.url }}" class="item-link">View Repository</a>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+    {% endif %}
+
+    {% if digest_data.blog_articles %}
+        <div class="section">
+            <h2 class="section-title">
+                <span class="section-icon">📚</span>
+                Stack Overflow Blog
+            </h2>
+            
+            {% for category, articles in digest_data.blog_articles.items() %}
+                {% if articles %}
+                    <h3 style="color: #2c3e50; margin-bottom: 10px;">
+                        {% if category == 'career-advice' %}💼 Career Advice
+                        {% elif category == 'ai-ml' %}🤖 AI & Machine Learning
+                        {% elif category == 'opensource' %}🔓 Open Source
+                        {% elif category == 'productivity' %}⚡ Productivity
+                        {% else %}📝 {{ category|title }}
+                        {% endif %}
+                    </h3>
+                    {% for article in articles[:3] %}
+                        <div class="item">
+                            <div class="item-title">{{ article.title }}</div>
+                            <div class="item-meta">by {{ article.author }}</div>
+                            <div class="item-description">{{ article.description }}</div>
+                            <a href="{{ article.url }}" class="item-link">Read Article</a>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if is_welcome %}
+        <div class="section">
+            <h2 class="section-title">
+                <span class="section-icon">⚙️</span>
+                Next Steps
+            </h2>
+            <div class="item">
+                <div class="item-title">Customize Your Preferences</div>
+                <div class="item-description">
+                    Add your favorite GitHub repositories, programming languages, and content categories to get more personalized digests.
+                </div>
+                <a href="{{ settings_url }}" class="item-link">Update Settings</a>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if total_items %}
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-number">{{ total_items }}</div>
+                <div class="stat-label">Total Items</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">{{ digest_data.github_issues|length + digest_data.github_pulls|length + digest_data.trending_repos|length }}</div>
+                <div class="stat-label">GitHub Updates</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">{{ digest_data.blog_articles.values()|map('length')|sum }}</div>
+                <div class="stat-label">Blog Articles</div>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

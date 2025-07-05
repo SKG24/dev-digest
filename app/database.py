@@ -1,4 +1,4 @@
-# File: app/database.py (UPDATED WITH UNSUBSCRIBE TOKEN)
+# File: app/database.py (UPDATED WITH CONTENT CATEGORIES)
 from sqlalchemy import create_engine, Column, Integer, String, Boolean, DateTime, Text, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session, relationship
@@ -21,7 +21,7 @@ class User(Base):
     email = Column(String(100), nullable=False, unique=True)
     is_active = Column(Boolean, default=True)
     timezone = Column(String(50), default="UTC")
-    unsubscribe_token = Column(String(64), unique=True, index=True)  # New field
+    unsubscribe_token = Column(String(64), unique=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -35,7 +35,8 @@ class UserPreferences(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     repositories = Column(Text)  # JSON string
     languages = Column(Text)     # JSON string
-    stackoverflow_tags = Column(Text)  # JSON string
+    content_categories = Column(Text)  # JSON string - New field
+    stackoverflow_tags = Column(Text)  # JSON string - Deprecated but kept for compatibility
     max_items_per_section = Column(Integer, default=5)
     digest_time = Column(String(5), default="20:00")
     created_at = Column(DateTime, default=datetime.utcnow)

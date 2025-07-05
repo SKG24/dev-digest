@@ -1,4 +1,4 @@
-# File: app/services/user_service.py (UPDATED WITH LOGIN AND UNSUBSCRIBE)
+# File: app/services/user_service.py (UPDATED WITH CONTENT CATEGORIES)
 from sqlalchemy.orm import Session
 from app.database import User, UserPreferences, DigestHistory
 from datetime import datetime, timedelta
@@ -40,7 +40,7 @@ class UserService:
             user_id=user.id,
             repositories=json.dumps([]),
             languages=json.dumps(["python"]),
-            stackoverflow_tags=json.dumps(["python"])
+            content_categories=json.dumps(["career-advice", "ai-ml", "opensource", "productivity"])
         )
         db.add(preferences)
         db.commit()
@@ -87,7 +87,7 @@ class UserService:
                 user_id=user_id,
                 repositories=json.dumps([]),
                 languages=json.dumps(["python"]),
-                stackoverflow_tags=json.dumps(["python"])
+                content_categories=json.dumps(["career-advice", "ai-ml", "opensource", "productivity"])
             )
             db.add(preferences)
             db.commit()
@@ -95,14 +95,14 @@ class UserService:
         return preferences
     
     def update_preferences(self, db: Session, user_id: int, repositories: str, 
-                         languages: str, stackoverflow_tags: str, digest_time: str, timezone: str):
+                         languages: str, content_categories: str, digest_time: str, timezone: str):
         """Update user preferences"""
         preferences = self.get_user_preferences(db, user_id)
         
         # Parse and validate input
         repo_list = [r.strip() for r in repositories.split(',') if r.strip()]
         lang_list = [l.strip() for l in languages.split(',') if l.strip()]
-        tag_list = [t.strip() for t in stackoverflow_tags.split(',') if t.strip()]
+        category_list = [c.strip() for c in content_categories.split(',') if c.strip()]
         
         # Validate time format
         if not re.match(r'^([01]?[0-9]|2[0-3]):[0-5][0-9]$', digest_time):
@@ -111,7 +111,7 @@ class UserService:
         # Update preferences
         preferences.repositories = json.dumps(repo_list)
         preferences.languages = json.dumps(lang_list)
-        preferences.stackoverflow_tags = json.dumps(tag_list)
+        preferences.content_categories = json.dumps(category_list)
         preferences.digest_time = digest_time
         
         # Update user timezone

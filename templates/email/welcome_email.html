@@ -1,0 +1,81 @@
+<!-- File: templates/email/welcome_email.html -->
+{% extends "email/base_email.html" %}
+
+{% block title %}Welcome to Dev Digest!{% endblock %}
+
+{% block header_title %}Welcome to Dev Digest! 🎉{% endblock %}
+
+{% block header_subtitle %}{{ user_name }}, we're excited to have you join our community!{% endblock %}
+
+{% block content %}
+    <div class="welcome-message">
+        <h2 style="margin: 0 0 15px 0;">Welcome to Dev Digest! 🎉</h2>
+        <p style="margin: 0;">We're excited to have you join our community of developers who stay updated with the latest in tech.</p>
+    </div>
+
+    <div class="section">
+        <h2 class="section-title">
+            <span class="section-icon">✨</span>
+            What to Expect
+        </h2>
+        
+        <div class="item">
+            <div class="item-title">Daily Personalized Digests</div>
+            <div class="item-description">
+                Get GitHub issues, pull requests, and trending repositories tailored to your interests.
+            </div>
+        </div>
+
+        <div class="item">
+            <div class="item-title">Stack Overflow Blog Articles</div>
+            <div class="item-description">
+                Curated content on career advice, AI/ML, open source, and productivity.
+            </div>
+        </div>
+
+        <div class="item">
+            <div class="item-title">Customizable Preferences</div>
+            <div class="item-description">
+                Fine-tune your digest content to match your tech stack and interests.
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2 class="section-title">
+            <span class="section-icon">🚀</span>
+            Get Started
+        </h2>
+        
+        <div class="item">
+            <div class="item-title">Your First Digest</div>
+            <div class="item-description">
+                Your first personalized digest is on its way! It includes content based on your initial preferences.
+            </div>
+        </div>
+
+        <div class="item">
+            <div class="item-title">Customize Your Experience</div>
+            <div class="item-description">
+                Add your favorite GitHub repositories, programming languages, and content categories for more personalized content.
+            </div>
+            <a href="{{ settings_url }}" class="item-link">Update Preferences</a>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2 class="section-title">
+            <span class="section-icon">💡</span>
+            Tips for Success
+        </h2>
+        
+        <div class="item">
+            <div class="item-description">
+                <strong>📧 Check your email daily</strong> - Digests are delivered at your preferred time<br>
+                <strong>🔧 Update preferences regularly</strong> - Keep your interests current<br>
+                <strong>🔗 Click through to articles</strong> - Dive deep into topics that interest you<br>
+                <strong>📱 Works on all devices</strong> - Read your digest anywhere
+            </div>
+        </div>
+    </div>
+{% endblock %}

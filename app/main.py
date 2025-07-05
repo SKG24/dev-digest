@@ -1,4 +1,4 @@
-# File: app/main.py (UPDATED WITH ALL FEATURES)
+# File: app/main.py (UPDATED SETTINGS ROUTE)
 from fastapi import FastAPI, Request, Form, Depends, HTTPException, status
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -163,7 +163,7 @@ async def update_settings(
     request: Request,
     repositories: str = Form(""),
     languages: str = Form(""),
-    stackoverflow_tags: str = Form(""),
+    content_categories: str = Form("career-advice,ai-ml,opensource,productivity"),
     digest_time: str = Form("20:00"),
     timezone: str = Form("UTC"),
     user: User = Depends(require_auth),
@@ -173,13 +173,15 @@ async def update_settings(
     try:
         user_service.update_preferences(
             db, user.id, repositories, languages, 
-            stackoverflow_tags, digest_time, timezone
+            content_categories, digest_time, timezone
         )
         return RedirectResponse(url="/settings?success=1", status_code=status.HTTP_302_FOUND)
     except ValueError as e:
+        preferences = user_service.get_user_preferences(db, user.id)
         return templates.TemplateResponse("settings.html", {
             "request": request,
             "user": user,
+            "preferences": preferences,
             "error": str(e)
         })
 

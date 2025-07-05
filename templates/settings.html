@@ -1,4 +1,4 @@
-<!-- File: templates/settings.html (PROPER FASTAPI SYNTAX) -->
+<!-- File: templates/settings.html (FIXED FASTAPI SYNTAX) -->
 {% extends "base.html" %}
 
 {% block title %}Settings - Dev Digest{% endblock %}
@@ -8,7 +8,7 @@
     <div class="container">
         <h2>Account Settings</h2>
         
-        {% if request.args.get('success') %}
+        {% if request.query_params.get('success') %}
             <div class="success-message">Settings updated successfully!</div>
         {% endif %}
         
@@ -36,11 +36,11 @@
             </div>
             
             <div class="settings-section">
-                <h3>Stack Overflow</h3>
-                <p class="help-text">Tags to follow for question recommendations</p>
+                <h3>Content Preferences</h3>
+                <p class="help-text">Categories for Stack Overflow blog articles</p>
                 <div class="form-group">
-                    <label for="stackoverflow_tags">Tags to Follow</label>
-                    <input type="text" id="stackoverflow_tags" name="stackoverflow_tags" placeholder="python, react, docker" value="{{ preferences.stackoverflow_tags|default('', true)|replace('[', '')|replace(']', '')|replace('"', '')|replace("'", '') }}">
+                    <label for="content_categories">Content Categories</label>
+                    <input type="text" id="content_categories" name="content_categories" placeholder="career-advice, ai-ml, opensource, productivity" value="{{ preferences.content_categories|default('career-advice,ai-ml,opensource,productivity', true)|replace('[', '')|replace(']', '')|replace('"', '')|replace("'", '') }}">
                 </div>
             </div>
             
